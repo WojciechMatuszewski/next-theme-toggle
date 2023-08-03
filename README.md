@@ -106,6 +106,46 @@ One neat thing about RSCs is that we can take advantage of the `cookies` API. Th
 
 All in all, the `cookie` method will not get us any additional benefit. Yes, the returned HTML will already contain the `data-theme` attribute on the `html` tag, but, to my best knowledge, that does not win us anything.
 
+For completeness sake, here is the code I'm talking about.
+
+```tsx
+import { cookies } from 'next/headers'
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const setInitialThemeScript = `
+    function getUserPreference() {
+        if (window.localStorage.getItem('theme')) {
+            return window.localStorage.getItem('theme')
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+
+    const theme = getUserPreference();
+    document.documentElement.setAttribute('data-theme', theme);
+`
+
+  /**
+   * Very much optional.
+   * Does not give us much of a benefit.
+   */
+  const cookieStore = cookies()
+  const themeCookie = cookieStore.get('theme')?.value
+
+  return (
+    <html lang="en" data-theme={themeCookie}>
+      <body className={inter.className}>
+        <script id="app-directory-theme-script" dangerouslySetInnerHTML={{ __html: setInitialThemeScript }} />
+        {children}
+      </body>
+    </html>
+  )
+}
+```
+
 ## The bottom line
 
 According to what I read on the internet, the consensus seem to be that injecting a small script before other JS loads is the way to go. This technique is also used by a quite popular [next-themes](https://github.com/pacocoursey/next-themes) library.
