@@ -1,6 +1,8 @@
-import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import "./styles.css"
+import Script from 'next/script'
+import { cookies } from 'next/dist/client/components/headers'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -14,9 +16,31 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const setInitialThemeScript = `
+    function getUserPreference() {
+        if (window.localStorage.getItem('theme')) {
+            return window.localStorage.getItem('theme')
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+
+    const theme = getUserPreference();
+    document.documentElement.setAttribute('data-theme', theme);
+`
+
+  /**
+   * Very much optional.
+   * Does not give us much of a benefit.
+   */
+  const cookieStore = cookies()
+  const themeCookie = cookieStore.get('theme')?.value
+
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" data-theme={themeCookie}>
+      <body className={inter.className}>
+        <script id="app-directory-theme-script" dangerouslySetInnerHTML={{ __html: setInitialThemeScript }} />
+        {children}
+      </body>
     </html>
   )
 }
